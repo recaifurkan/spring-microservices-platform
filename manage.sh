@@ -466,12 +466,13 @@ do_env() {
 
   case "$sub" in
     up)
-      title "🐳 Starting Docker Compose (PostgreSQL + pgAdmin)..."
+      title "🐳 Starting Docker Compose (PostgreSQL + pgAdmin + Grafana)..."
       _dc up -d "$@"
       print ""
       ok "PostgreSQL up → localhost:5432  (user: app / password: password)"
       ok "pgAdmin up   → http://localhost:5050  (admin@local.dev / admin)"
       ok "Jaeger UI up → http://localhost:16686  (OTLP: localhost:4318)"
+      ok "Grafana up   → http://localhost:3000  (admin / admin)"
       print ""
       print -P "  ${DIM}To start services with the local env:${NC}"
       print -P "  ${DIM}  ./manage.sh start --env local --no-build${NC}"
