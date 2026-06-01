@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Ürün Kartı Fragment — Tüm sayfalarda ortak kullanım
+  Parametreler:
+    p        : ürün Map nesnesi (id, name, brand, category, price, originalPrice,
+                                  discountPercent, stock, rating, reviewCount)
+    returnTo : sepete ekle sonrası dönülecek URL (null olabilir)
+-->
+<div th:fragment="card(p, returnTo)">
+<div th:if="${p != null}" class="product-card">
+
+  <!-- Ürün görseli -->
+  <a th:href="@{/products/{id}(id=${p['id']})}">
+    <div class="product-img" th:attr="data-cat=${p['category']}">
+      <span class="p-emoji" th:text="${@catMeta.emoji(p['category'])}">📦</span>
+      <span class="discount-badge"
+            th:if="${p['discountPercent'] != null and p['discountPercent'] > 0}"
+            th:text="'-%' + ${p['discountPercent']}"></span>
+      <button class="fav-btn" onclick="return false" th:title="#{common.fav.title}">🤍</button>
+    </div>
+  </a>
+
+  <!-- Ürün bilgileri -->
+  <div class="product-body">
+
+    <div class="product-brand" th:if="${p['brand']}" th:text="${p['brand']}"></div>
+
+    <div class="product-name">
+      <a th:href="@{/products/{id}(id=${p['id']})}" th:text="${p['name']}">Product</a>
+    </div>
+
+    <div class="stars">
+      <span class="stars-visual"
+            th:text="${p['rating'] != null ?
+              (p['rating'] >= 4.8 ? '★★★★★' :
+               p['rating'] >= 4.0 ? '★★★★☆' :
+               p['rating'] >= 3.0 ? '★★★☆☆' : '★★☆☆☆') : '★★★★☆'}">★★★★☆</span>
+      <span class="stars-count"
+            th:text="'(' + (${p['reviewCount']} ?: 0) + ')'"></span>
+    </div>
+
+    <div class="product-price">
+      <span class="price-current"
+            th:text="'₺' + ${#numbers.formatDecimal(p['price'],1,'COMMA',2,'POINT')}">₺0</span>
+      <span class="price-original"
+            th:if="${p['discountPercent'] != null and p['discountPercent'] > 0 and p['originalPrice'] != null}"
+            th:text="'₺' + ${#numbers.formatDecimal(p['originalPrice'],1,'COMMA',2,'POINT')}"></span>
+    </div>
+
+    <div class="stock-status">
+      <th:block th:if="${p['stock'] != null and p['stock'] > 10}">
+        <span class="stock-ok" th:text="#{common.inStock}">✅ In Stock</span>
+      </th:block>
+      <th:block th:if="${p['stock'] != null and p['stock'] > 0 and p['stock'] <= 10}">
+        <span class="stock-low">⚠️
+          <span th:text="#{product.stock.only}">Only</span>
+          <span th:text="${p['stock']}"></span>
+          <span th:text="#{product.stock.left}">left</span>
+        </span>
+      </th:block>
+      <th:block th:if="${p['stock'] == null or p['stock'] == 0}">
+        <span class="stock-out" th:text="#{common.outOfStock}">❌ Out of Stock</span>
+      </th:block>
+    </div>
+
+    <div class="product-actions">
+      <a th:href="@{/products/{id}(id=${p['id']})}"
+         class="btn btn-outline btn-sm" style="flex:1"
+         th:text="#{common.inspect}">Inspect</a>
+      <form th:action="@{/cart/add}" method="post" style="flex:1">
+        <input type="hidden" name="productId"  th:value="${p['id']}">
+        <input type="hidden" name="quantity"   value="1">
+        <input type="hidden" name="returnTo"   th:if="${returnTo != null}" th:value="${returnTo}">
+        <button type="submit"
+                class="btn btn-primary btn-sm btn-block"
+                th:disabled="${p['stock'] == null or p['stock'] == 0}"
+                th:text="#{common.addToCart}">🛒 Add to Cart</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+</div>
+
+</body>
+</html>
+

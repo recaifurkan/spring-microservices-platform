@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{payments.title}">My Payments – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="card">
+        <div class="page-header">
+            <h2 th:text="#{payments.heading}">💳 My Payments</h2>
+        </div>
+
+        <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+        <div class="empty-state" th:if="${data.payments.empty}">
+            <p th:text="#{payments.empty}">No payment records found.</p>
+            <a th:href="@{/orders}" class="btn btn-secondary"
+               th:text="#{payments.viewOrders}">📦 View My Orders</a>
+        </div>
+
+        <div class="table-wrapper" th:unless="${data.payments.empty}">
+            <table>
+                <thead>
+                    <tr>
+                        <th th:text="#{payments.col.id}">#ID</th>
+                        <th th:text="#{payments.col.orderId}">Order #</th>
+                        <th th:text="#{payments.col.amount}">Amount</th>
+                        <th th:text="#{payments.col.method}">Method</th>
+                        <th th:text="#{payments.col.status}">Status</th>
+                        <th th:text="#{payments.col.txnId}">Transaction ID</th>
+                        <th th:text="#{payments.col.date}">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${data.payments}">
+                        <td th:text="${p['id']}">1</td>
+                        <td th:text="${p['orderId']}">100</td>
+                        <td><strong th:text="'₺' + ${p['amount']}">₺0.00</strong></td>
+                        <td th:text="${p['paymentMethod']}">CREDIT_CARD</td>
+                        <td>
+                            <span th:with="s=${p['status']}"
+                                  th:class="${s == 'SUCCESS' ? 'badge badge-success' :
+                                             s == 'PENDING' ? 'badge badge-warning' :
+                                             s == 'REFUNDED' ? 'badge badge-info' : 'badge badge-danger'}"
+                                  th:text="${s}">SUCCESS</span>
+                        </td>
+                        <td style="font-family:monospace;font-size:12px" th:text="${p['transactionId']}">TXN-XXXX</td>
+                        <td th:text="${#strings.substring(p['createdAt']?.toString(), 0, 16)}">2026-01-01</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

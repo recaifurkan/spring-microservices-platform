@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{notifications.title}">Notifications – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2 style="margin:0">
+                    <span th:text="#{notifications.heading}">🔔 Notifications</span>
+                    <span class="badge badge-danger"
+                          th:if="${data.unreadCount > 0}"
+                          th:text="${data.unreadCount} + ' ' + #{notifications.unread}"></span>
+                </h2>
+            </div>
+            <form th:action="@{/notifications/read-all}" method="post"
+                  th:if="${data.unreadCount > 0}">
+                <button type="submit" class="btn btn-secondary btn-sm"
+                        th:text="#{notifications.markAllRead}">✅ Mark All as Read</button>
+            </form>
+        </div>
+
+        <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+        <div class="empty-state" th:if="${data.notifications.empty}">
+            <p th:text="#{notifications.empty}">No notifications yet.</p>
+        </div>
+
+        <div th:each="n : ${data.notifications}"
+             th:class="${!n['read'] ? 'notification-item unread' : 'notification-item'}">
+            <div class="notif-type" th:text="${n['type']}">TYPE</div>
+            <div class="notif-msg" th:text="${n['message']}">Message</div>
+            <div class="notif-time" th:text="${#strings.substring(n['createdAt']?.toString(), 0, 16)}">2026-01-01</div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

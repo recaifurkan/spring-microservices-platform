@@ -1,0 +1,16 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "spring-microservices-platform (local)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "app",
+      "Password": "password",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpassfile"
+    }
+  }
+}
+

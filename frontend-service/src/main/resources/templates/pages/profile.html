@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{profile.title}">My Profile – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="container-sm">
+        <!-- Profile info -->
+        <div class="card">
+            <div class="avatar" th:if="${data.profile != null and data.profile['avatarUrl'] == null}">
+                <span th:text="${#strings.toUpperCase(#strings.substring(data.preferredUsername ?: 'U', 0, 1))}">U</span>
+            </div>
+            <img th:if="${data.profile != null and data.profile['avatarUrl'] != null}"
+                 th:src="${data.profile['avatarUrl']}"
+                 class="avatar" style="object-fit:cover" alt="Avatar">
+
+            <h2 th:text="${data.profile != null ? data.profile['fullName'] ?: data.profile['username'] : data.preferredUsername}">Name</h2>
+
+            <div class="info-row">
+                <span class="info-label" th:text="#{profile.label.email}">Email</span>
+                <span th:text="${data.profile != null ? data.profile['email'] : data.email}">—</span>
+            </div>
+            <div class="info-row" th:if="${data.profile != null and data.profile['bio'] != null}">
+                <span class="info-label" th:text="#{profile.label.bio}">Bio</span>
+                <span th:text="${data.profile['bio']}">—</span>
+            </div>
+        </div>
+
+        <!-- Edit profile -->
+        <div class="card">
+            <div class="page-header">
+                <h3 th:text="#{profile.edit.title}">✏️ Edit Profile</h3>
+            </div>
+
+            <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+            <form th:action="@{/profile}" method="post">
+                <div class="form-group">
+                    <label th:text="#{profile.label.fullName}">Full Name</label>
+                    <input type="text" name="fullName"
+                           th:value="${data.profile != null ? data.profile['fullName'] : ''}"
+                           th:placeholder="#{profile.placeholder.fullName}">
+                </div>
+                <div class="form-group">
+                    <label th:text="#{profile.label.bio}">Bio</label>
+                    <textarea name="bio" th:placeholder="#{profile.placeholder.bio}"
+                              th:text="${data.profile != null ? data.profile['bio'] : ''}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label th:text="#{profile.label.avatarUrl}">Avatar URL</label>
+                    <input type="url" name="avatarUrl"
+                           th:value="${data.profile != null ? data.profile['avatarUrl'] : ''}"
+                           placeholder="https://...">
+                </div>
+                <button type="submit" class="btn btn-primary" th:text="#{profile.save}">💾 Save</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

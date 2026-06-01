@@ -1,0 +1,98 @@
+# =============================================
+# order-service-specific config
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 8085
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/orderdb;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+          issuer-uri: http://localhost:9000
+      # The user token is propagated to downstream services via FeignConfig.
+      # Because RoleScopeMapper gives the user JWT catalog:write and notifications:write
+      # scopes, a separate service-account is not required.
+
+  # Feign: Apache HttpClient 5 support for PATCH
+  cloud:
+    openfeign:
+      httpclient:
+        hc5:
+          enabled: true
+
+# Product service URL (called with a service-account for stock reduction)
+product:
+  service:
+    url: http://localhost:8084
+
+# ── Resilience4j – order-service-specific instances ───────────────────────
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        record-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - feign.FeignException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      product-service:
+        base-config: default
+      product-service-stock:
+        base-config: default
+      notification-service:
+        base-config: default
+  retry:
+    instances:
+      product-service:
+        base-config: default
+      product-service-stock:
+        base-config: default
+      notification-service:
+        base-config: default
+
+# Fast heartbeat
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+  instance:
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    oauth2-redirect-url: http://localhost:8085/swagger-ui/oauth2-redirect.html
+    oauth:
+      client-id: client-app
+      client-secret: secret
+      scopes: "openid read write"
+    persist-authorization: true
+

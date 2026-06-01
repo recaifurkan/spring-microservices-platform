@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: frontend-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  messages:
+    basename: messages
+    encoding: UTF-8
+    use-code-as-default-message: false
+
+

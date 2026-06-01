@@ -1,0 +1,49 @@
+# =============================================
+# notification-service-specific config
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 8087
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/notificationdb;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+          issuer-uri: http://localhost:9000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    oauth2-redirect-url: http://localhost:8087/swagger-ui/oauth2-redirect.html
+    oauth:
+      client-id: client-app
+      client-secret: secret
+      scopes: "openid read write"
+    persist-authorization: true
+

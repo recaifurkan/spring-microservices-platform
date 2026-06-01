@@ -1,0 +1,34 @@
+apiVersion: 1
+
+datasources:
+  # ── Loki (Logs) ────────────────────────────────────────────────
+  - name: Loki
+    type: loki
+    uid: loki
+    url: http://loki:3100
+    access: proxy
+    isDefault: true
+    jsonData:
+      derivedFields:
+        # logdaki traceId değerini yakala → Jaeger'da aç
+        - datasourceUid: jaeger
+          matcherRegex: 'traceId=([a-f0-9A-F]{16,32})'
+          name: TraceID
+          url: "$${__value.raw}"
+          urlDisplayLabel: "Jaeger'da Gör"
+
+  # ── Jaeger (Traces) ────────────────────────────────────────────
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger
+    url: http://jaeger:16686
+    access: proxy
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: false
+      nodeGraph:
+        enabled: true
+

@@ -1,0 +1,219 @@
+# =============================================================
+# docker-compose.yml — spring-microservices-platform LOCAL Environment
+#
+# Infrastructure services:
+#   • PostgreSQL 16      → localhost:5432
+#   • pgAdmin 4          → http://localhost:5050
+#   • OTel Collector     → localhost:4317 (gRPC) / 4318 (HTTP)  ← Spring Boot sends traces here
+#   • Jaeger (tracing)   → http://localhost:16686  (UI + SPM)
+#   • Prometheus         → http://localhost:9090
+#   • Loki (logs)        → localhost:3100
+#   • Grafana            → http://localhost:3000   (admin / admin)
+#
+# Usage:
+#   docker compose up -d          # Start everything
+#   docker compose down           # Stop (data is preserved)
+#   docker compose down -v        # Stop + delete volumes
+#
+# Spring Boot services are started separately with manage.sh:
+#   ./manage.sh start --env local --no-build
+# =============================================================
+
+services:
+
+  # ────────────────────────────────────────────────
+  # PostgreSQL 16
+  # ────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: spring-microservices-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: postgres          # default DB; init.sql creates the others
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # pgAdmin 4 — PostgreSQL Web UI
+  # http://localhost:5050
+  # Email  : admin@local.dev
+  # Password: admin
+  # ────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: spring-microservices-pgadmin
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # OpenTelemetry Collector
+  # Spring Boot sends traces here (4317/4318).
+  # Collector forwards traces to Jaeger.
+  # Collector exposes span metrics to Prometheus (for SPM).
+  # ────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.0
+    container_name: spring-microservices-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./docker/otel-collector/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC  ← Spring Boot (gRPC)
+      - "4318:4318"   # OTLP HTTP  ← Spring Boot (HTTP)
+      - "8889:8889"   # Prometheus metrics (spanmetrics)
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # Jaeger — Distributed Tracing + SPM
+  #
+  # UI   → http://localhost:16686
+  # SPM  → Monitor tab: Rate / Error / Duration per service
+  # ────────────────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: spring-microservices-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      SPAN_STORAGE_TYPE: memory
+      MEMORY_MAX_TRACES: "10000"
+      # SPM — read span metrics from Prometheus
+      METRICS_STORAGE_TYPE: prometheus
+      PROMETHEUS_SERVER_URL: http://prometheus:9090
+      PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR: "true"
+      PROMETHEUS_QUERY_NORMALIZE_CALLS: "true"
+      PROMETHEUS_QUERY_NORMALIZE_DURATION: "true"
+      PROMETHEUS_QUERY_NAMESPACE: "traces"
+      PROMETHEUS_QUERY_DURATION_UNIT: "ms"
+    ports:
+      - "16686:16686"   # Jaeger UI
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:16686/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # Prometheus — Metrics storage (for SPM)
+  # http://localhost:9090
+  # OTel Collector span metrics are stored here.
+  # Jaeger SPM reads these metrics.
+  # ────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: spring-microservices-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # Loki — Log storage
+  # OTel Collector writes logs here.
+  # ────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: spring-microservices-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - spring-local
+
+  # ────────────────────────────────────────────────
+  # Grafana — Logs + traces UI
+  # http://localhost:3000  (admin / admin)
+  # Loki: text search, filter by traceId
+  # Jaeger datasource: jump from traces to Loki logs
+  # ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: spring-microservices-grafana
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_FEATURE_TOGGLES_ENABLE: traceqlEditor
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - spring-local
+
+# ────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    name: spring-microservices-postgres-data
+  pgadmin_data:
+    name: spring-microservices-pgadmin-data
+  prometheus_data:
+    name: spring-microservices-prometheus-data
+  loki_data:
+    name: spring-microservices-loki-data
+  grafana_data:
+    name: spring-microservices-grafana-data
+
+networks:
+  spring-local:
+    name: spring-local
+    driver: bridge

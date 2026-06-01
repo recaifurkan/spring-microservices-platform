@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{checkout.title}">Checkout – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="container-sm">
+        <div class="card">
+            <div class="page-header">
+                <h2 th:text="#{checkout.heading}">💳 Checkout</h2>
+                <p th:text="#{checkout.subtitle}">Confirm your order and proceed to payment.</p>
+            </div>
+            <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+            <!-- Order summary -->
+            <div class="card" style="background:#f8f9fa;margin-bottom:20px">
+                <h3 style="margin-bottom:12px" th:text="#{checkout.orderSummary}">🧾 Order Summary</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr>
+                            <th th:text="#{checkout.col.product}">Product</th>
+                            <th th:text="#{checkout.col.qty}">Qty</th>
+                            <th th:text="#{checkout.col.total}">Total</th>
+                        </tr></thead>
+                        <tbody>
+                            <tr th:each="item : ${data.items}">
+                                <td th:text="${item['productName']}">Product</td>
+                                <td th:text="${item['quantity']}">1</td>
+                                <td th:text="'₺' + ${item['subtotal']}">₺0.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" style="text-align:right;font-weight:600"
+                                    th:text="#{checkout.col.totalLabel}">Total:</td>
+                                <td style="font-size:1.2rem;font-weight:700;color:#27ae60">
+                                    ₺<span th:text="${data.total}">0.00</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3DS info -->
+            <div class="alert alert-info" style="margin-bottom:20px">
+                <strong th:text="#{checkout.3ds.title}">🔐 3D Secure Payment:</strong>
+                <br><span th:utext="#{checkout.3ds.desc}">...</span>
+            </div>
+
+            <!-- Payment form -->
+            <form th:action="@{/checkout/pay}" method="post">
+                <div class="form-group">
+                    <label th:text="#{checkout.paymentMethod}">Payment Method</label>
+                    <select name="paymentMethod" class="form-group">
+                        <option value="CREDIT_CARD" th:text="#{checkout.creditCard}">💳 Credit Card</option>
+                        <option value="DEBIT_CARD"  th:text="#{checkout.debitCard}">💳 Debit Card</option>
+                        <option value="BANK_TRANSFER" th:text="#{checkout.bankTransfer}">🏦 Bank Transfer</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:8px">
+                    <a th:href="@{/cart}" class="btn btn-secondary"
+                       th:text="#{checkout.backToCart}">← Back to Cart</a>
+                    <button type="submit" class="btn btn-primary" style="flex:1;font-size:1rem"
+                            th:text="#{checkout.startPayment}">🔐 Start Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

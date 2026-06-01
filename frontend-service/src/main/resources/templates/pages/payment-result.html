@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{payment.result.title}">Payment Result – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="container-sm">
+        <div class="card" style="text-align:center;padding:48px">
+
+            <!-- Success -->
+            <div th:if="${data.status == 'SUCCESS' or data.status == 'FRICTIONLESS'}">
+                <div style="font-size:4rem;margin-bottom:16px">✅</div>
+                <h2 style="color:#27ae60;margin-bottom:8px"
+                    th:text="#{payment.result.success.heading}">Payment Successful!</h2>
+                <p style="color:#7f8c8d;margin-bottom:8px"
+                   th:if="${data.threeDsType == 'FRICTIONLESS'}"
+                   th:utext="#{payment.result.frictionless.desc}">Frictionless flow</p>
+                <p style="color:#7f8c8d;margin-bottom:8px"
+                   th:if="${data.threeDsType == 'CHALLENGE'}"
+                   th:utext="#{payment.result.challenge.desc}">3D Secure Challenge</p>
+                <p style="color:#95a5a6;font-size:0.88rem;margin-bottom:32px"
+                   th:if="${data.paymentId != null}"
+                   th:text="#{payment.result.payment.prefix} + ${data.paymentId}">Payment #</p>
+                <div class="quick-actions" style="justify-content:center">
+                    <a th:href="@{/orders}"   class="btn btn-primary"   th:text="#{payment.result.myOrders}">📦 My Orders</a>
+                    <a th:href="@{/products}" class="btn btn-secondary" th:text="#{payment.result.continueShopping}">🛍️ Continue Shopping</a>
+                </div>
+            </div>
+
+            <!-- Failed -->
+            <div th:if="${data.status == 'FAILED' or data.status == 'CANCELLED'}">
+                <div style="font-size:4rem;margin-bottom:16px">❌</div>
+                <h2 style="color:#e74c3c;margin-bottom:8px"
+                    th:text="#{payment.result.failed.heading}">Payment Failed</h2>
+                <p style="color:#7f8c8d;margin-bottom:32px"
+                   th:text="#{payment.result.failed.desc}">3D Secure verification failed.</p>
+                <div class="quick-actions" style="justify-content:center">
+                    <a th:href="@{/cart}"     class="btn btn-primary"   th:text="#{payment.result.backToCart}">🛒 Back to Cart</a>
+                    <a th:href="@{/products}" class="btn btn-secondary" th:text="#{payment.result.goToProducts}">🛍️ Go to Products</a>
+                </div>
+            </div>
+
+            <!-- Pending / unknown -->
+            <div th:if="${data.status == null or (data.status != 'SUCCESS' and data.status != 'FRICTIONLESS' and data.status != 'FAILED' and data.status != 'CANCELLED')}">
+                <div style="font-size:4rem;margin-bottom:16px">⏳</div>
+                <h2 style="color:#f39c12;margin-bottom:8px"
+                    th:text="#{payment.result.pending.heading}">Transaction in Progress</h2>
+                <p style="color:#7f8c8d;margin-bottom:32px"
+                   th:text="#{payment.result.pending.desc}">Checking payment status...</p>
+                <a th:href="@{/orders}" class="btn btn-primary"
+                   th:text="#{payment.result.goToOrders}">📦 Go to My Orders</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="#{dashboard.title}">Dashboard – ShopMicro</title>
+</head>
+<body>
+<main>
+    <!-- Welcome -->
+    <div class="card">
+        <h2><span th:text="#{dashboard.welcome}">Welcome,</span>
+            <span th:text="${data.userName}">User</span>! 👋</h2>
+        <p th:if="${data.email}" th:text="'📧 ' + ${data.email}" style="color:#7f8c8d;margin:4px 0 0"></p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="grid-auto">
+        <div class="stat-card">
+            <div class="stat-num">7</div>
+            <p class="stat-label" th:text="#{dashboard.stat.microservices}">Active Microservices</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">🔐</div>
+            <p class="stat-label" th:text="#{dashboard.stat.oauth}">OAuth2 JWT Active</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num">🌐</div>
+            <p class="stat-label" th:text="#{dashboard.stat.gateway}">API Gateway Active</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" th:text="${data.unreadCount}">0</div>
+            <p class="stat-label" th:text="#{dashboard.stat.unreadNotif}">Unread Notifications</p>
+        </div>
+    </div>
+
+    <!-- Quick access -->
+    <div class="card">
+        <div class="page-header">
+            <h3 th:text="#{dashboard.quickAccess.title}">⚡ Quick Access</h3>
+        </div>
+        <div class="quick-actions">
+            <a th:href="@{/products}"      class="btn btn-primary"   th:text="#{dashboard.quickAccess.products}">🛍️ Products</a>
+            <a th:href="@{/orders}"        class="btn btn-primary"   th:text="#{dashboard.quickAccess.orders}">📦 My Orders</a>
+            <a th:href="@{/payments}"      class="btn btn-primary"   th:text="#{dashboard.quickAccess.payments}">💳 My Payments</a>
+            <a th:href="@{/notifications}" class="btn btn-primary"   th:text="#{dashboard.quickAccess.notifications}">🔔 Notifications</a>
+            <a th:href="@{/profile}"       class="btn btn-secondary" th:text="#{dashboard.quickAccess.profile}">👤 My Profile</a>
+        </div>
+    </div>
+
+    <!-- Service architecture -->
+    <div class="card">
+        <div class="page-header">
+            <h3 th:text="#{dashboard.services.title}">🏗️ Service Architecture</h3>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th th:text="#{dashboard.services.col.service}">Service</th>
+                        <th th:text="#{dashboard.services.col.port}">Port</th>
+                        <th th:text="#{dashboard.services.col.role}">Role</th>
+                        <th th:text="#{dashboard.services.col.link}">Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🔐 Auth Server</td><td>9000</td>
+                        <td th:text="#{dashboard.service.auth.role}">OAuth2 / OIDC / JWT</td>
+                        <td><a href="http://localhost:9000/h2-console" target="_blank" class="service-link">H2 Console</a></td>
+                    </tr>
+                    <tr>
+                        <td>🌐 API Gateway</td><td>8090</td>
+                        <td th:text="#{dashboard.service.gateway.role}">JWT Validation + Routing</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>👤 User Service</td><td>8082</td>
+                        <td th:text="#{dashboard.service.user.role}">Profile Management</td>
+                        <td><a href="http://localhost:8082/swagger-ui/index.html" target="_blank" class="service-link">Swagger</a></td>
+                    </tr>
+                    <tr>
+                        <td>🛍️ Product Service</td><td>8084</td>
+                        <td th:text="#{dashboard.service.product.role}">Product Catalog</td>
+                        <td><a href="http://localhost:8084/swagger-ui/index.html" target="_blank" class="service-link">Swagger</a></td>
+                    </tr>
+                    <tr>
+                        <td>📦 Order Service</td><td>8085</td>
+                        <td th:text="#{dashboard.service.order.role}">Order Management</td>
+                        <td><a href="http://localhost:8085/swagger-ui/index.html" target="_blank" class="service-link">Swagger</a></td>
+                    </tr>
+                    <tr>
+                        <td>💳 Payment Service</td><td>8086</td>
+                        <td th:text="#{dashboard.service.payment.role}">Payment Processing</td>
+                        <td><a href="http://localhost:8086/swagger-ui/index.html" target="_blank" class="service-link">Swagger</a></td>
+                    </tr>
+                    <tr>
+                        <td>🔔 Notification Service</td><td>8087</td>
+                        <td th:text="#{dashboard.service.notification.role}">Notification System</td>
+                        <td><a href="http://localhost:8087/swagger-ui/index.html" target="_blank" class="service-link">Swagger</a></td>
+                    </tr>
+                    <tr>
+                        <td>⚙️ Config Server</td><td>8888</td>
+                        <td th:text="#{dashboard.service.config.role}">Centralized Configuration</td>
+                        <td><a href="http://localhost:8888/actuator" target="_blank" class="service-link">Actuator</a></td>
+                    </tr>
+                    <tr>
+                        <td>📡 Eureka</td><td>8761</td>
+                        <td th:text="#{dashboard.service.eureka.role}">Service Discovery</td>
+                        <td><a href="http://localhost:8761" target="_blank" class="service-link">UI</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

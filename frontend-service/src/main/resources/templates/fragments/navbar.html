@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<nav th:fragment="navbar" class="navbar">
+  <div class="container navbar-inner">
+
+    <!-- Logo -->
+    <a th:href="@{/}" class="navbar-brand">Shop<span class="brand-dot">Micro</span></a>
+
+    <!-- Search bar — herkes için (ürünler public) -->
+    <div class="navbar-search">
+      <form th:action="@{/products}" method="get" autocomplete="off">
+        <input id="navSearchInput" type="text" name="search"
+               th:placeholder="#{nav.search.placeholder}" autocomplete="off">
+        <button type="submit">🔍</button>
+      </form>
+      <div id="searchSuggestions" class="search-suggestions"></div>
+    </div>
+
+    <!-- Nav links -->
+    <nav class="navbar-nav">
+      <span sec:authorize="!isAuthenticated()">
+
+        <!-- Cart — misafir sepeti için görünür -->
+        <a th:href="@{/cart}" style="position:relative">
+          <span th:text="#{nav.cart}">Cart</span>
+          <span class="nav-badge" th:if="${data != null and data.cartCount > 0}" th:text="${data.cartCount}"></span>
+        </a>
+
+        <a th:href="@{/products}" th:text="#{nav.products}">Products</a>
+        <a th:href="@{/oauth2/authorization/auth-server}" th:text="#{nav.login}">Sign In</a>
+        <a th:href="@{/register}" class="btn btn-primary btn-sm"
+           style="margin-left:4px" th:text="#{nav.register}">Register</a>
+      </span>
+
+      <span sec:authorize="isAuthenticated()" style="display:contents">
+        <a th:href="@{/products}" th:text="#{nav.products}">Products</a>
+        <a th:href="@{/orders}" th:text="#{nav.myOrders}">My Orders</a>
+
+        <!-- Cart -->
+        <a th:href="@{/cart}" style="position:relative">
+          <span th:text="#{nav.cart}">Cart</span>
+          <span class="nav-badge" th:if="${data != null and data.cartCount > 0}" th:text="${data.cartCount}"></span>
+        </a>
+
+        <!-- Notifications -->
+        <a th:href="@{/notifications}" style="position:relative">
+          🔔
+          <span class="nav-badge notif-badge" th:if="${data != null and data.unreadCount > 0}" th:text="${data.unreadCount}"></span>
+        </a>
+
+        <span class="nav-divider">|</span>
+        <a th:href="@{/profile}">👤 <sec:authentication property="name"/></a>
+        <a th:href="@{/logout}" style="color:rgba(255,255,255,.55)" th:text="#{nav.logout}">Sign Out</a>
+      </span>
+    </nav>
+  </div>
+</nav>
+
+<!-- Category bar — herkes için (ürünler public) -->
+<div th:fragment="catbar" class="category-bar">
+  <div class="container category-bar-inner">
+
+    <a th:href="@{/products}" class="cat-link"
+       th:classappend="${data == null or data.category == null ? ' active' : ''}"
+       th:text="#{nav.catbar.all}">All</a>
+
+    <th:block th:if="${globalCategories != null and !globalCategories.empty}">
+      <a th:each="cat : ${globalCategories}"
+         th:href="@{/products(category=${cat})}"
+         class="cat-link"
+         th:classappend="${data != null and data.category == cat ? ' active' : ''}"
+         th:text="${@catMeta.emoji(cat) + ' ' + cat}">Category</a>
+    </th:block>
+
+    <th:block th:if="${globalCategories == null or globalCategories.empty}">
+      <a th:href="@{/products(category='Elektronik')}"   class="cat-link"
+         th:classappend="${category == 'Elektronik' ? ' active' : ''}">💻 Elektronik</a>
+      <a th:href="@{/products(category='Giyim & Moda')}" class="cat-link">👕 Giyim</a>
+      <a th:href="@{/products(category='Kitap')}"         class="cat-link">📚 Kitap</a>
+      <a th:href="@{/products(category='Spor & Outdoor')}" class="cat-link">⚽ Spor</a>
+    </th:block>
+
+    <a th:href="@{/dashboard}" class="cat-link" th:text="#{nav.catbar.dashboard}">Dashboard</a>
+  </div>
+</div>
+
+</body>
+</html>

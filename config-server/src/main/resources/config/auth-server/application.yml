@@ -1,0 +1,40 @@
+# =============================================
+# auth-server-specific config
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 9000
+
+spring:
+  # Persistent H2 database (file-based) — data survives restarts
+  datasource:
+    url: jdbc:h2:file:./data/authdb;AUTO_SERVER=TRUE;MODE=LEGACY
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA – DDL is managed by Flyway; Hibernate only validates the schema
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+
+  # Flyway runs migrations from the classpath:db/migration folder
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # H2 web console (dev only) → http://localhost:9000/h2-console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+# Auth Server issuer URI (used as the iss claim in tokens)
+auth-server:
+  issuer-uri: http://localhost:9000
+

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html th:fragment="layout(title, content)"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">ShopMicro</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+    <div class="announcement-bar">
+        <span th:text="#{announcement.freeShipping}"></span> &nbsp;|&nbsp;
+        <span th:text="#{announcement.returnGuarantee}"></span> &nbsp;|&nbsp;
+        <span th:text="#{announcement.support}"></span>
+    </div>
+    <th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
+    <th:block th:replace="~{fragments/navbar :: catbar}"></th:block>
+
+    <main class="main-content">
+        <div class="container">
+            <th:block th:replace="${content}"></th:block>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <script>
+    // ── Autocomplete search ──────────────────────────────────────
+    (function(){
+      const input = document.getElementById('navSearchInput');
+      const suggBox = document.getElementById('searchSuggestions');
+      if(!input || !suggBox) return;
+      let timer;
+      input.addEventListener('input', function(){
+        clearTimeout(timer);
+        const q = this.value.trim();
+        if(q.length < 2){ suggBox.classList.remove('open'); return; }
+        timer = setTimeout(() => {
+          fetch('/api/products/suggestions?q=' + encodeURIComponent(q))
+            .then(r => r.ok ? r.json() : [])
+            .then(data => {
+              suggBox.innerHTML = '';
+              if(!data || data.length === 0){ suggBox.classList.remove('open'); return;}
+              data.forEach(s => {
+                const d = document.createElement('div');
+                d.className = 'suggestion-item';
+                d.innerHTML = '<span>🔍 ' + s.name + '</span><span class="sg-cat">' + (s.category||'') + '</span>';
+                d.onclick = () => { window.location.href = '/products/' + s.id; };
+                suggBox.appendChild(d);
+              });
+              suggBox.classList.add('open');
+            }).catch(()=>{});
+        }, 260);
+      });
+      document.addEventListener('click', e => { if(!suggBox.contains(e.target) && e.target !== input) suggBox.classList.remove('open'); });
+    })();
+
+    // ── Favorite toggle (visual only) ────────────────────────────
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+      btn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        this.classList.toggle('active');
+        this.textContent = this.classList.contains('active') ? '❤️' : '🤍';
+      });
+    });
+
+    // ── Mobile filter toggle ──────────────────────────────────────
+    const mfBtn = document.getElementById('mobileFilterBtn');
+    const sidebar = document.querySelector('.filter-sidebar');
+    if(mfBtn && sidebar){
+      mfBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+    }
+
+    // ── Qty control (product detail) ─────────────────────────────
+    const qtyMinus = document.getElementById('qtyMinus');
+    const qtyPlus  = document.getElementById('qtyPlus');
+    const qtyVal   = document.getElementById('qtyVal');
+    if(qtyMinus && qtyPlus && qtyVal){
+      qtyMinus.addEventListener('click', () => { const v=parseInt(qtyVal.value); if(v>1) qtyVal.value=v-1; });
+      qtyPlus.addEventListener('click',  () => { const v=parseInt(qtyVal.value); const mx=parseInt(qtyVal.max||99); if(v<mx) qtyVal.value=v+1; });
+    }
+
+    // ── Tab panels ────────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function(){
+        const target = this.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+        this.classList.add('active');
+        const panel = document.getElementById(target);
+        if(panel) panel.classList.add('active');
+      });
+    });
+
+    // ── Category coloring for product images ─────────────────────
+    const catColors = {
+      'Elektronik':                ['#1e3a8a','#3b82f6'],
+      'Giyim':                     ['#4c1d95','#7c3aed'],
+      'Giyim & Moda':              ['#4c1d95','#7c3aed'],
+      'Kitap':                     ['#14532d','#16a34a'],
+      'Spor':                      ['#7c2d12','#ea580c'],
+      'Spor & Outdoor':            ['#7c2d12','#ea580c'],
+      'Ev & Yaşam':                ['#164e63','#0891b2'],
+      'Kozmetik':                  ['#831843','#db2777'],
+      'Kozmetik & Kişisel Bakım':  ['#831843','#db2777'],
+      'Aksesuar':                  ['#713f12','#ca8a04'],
+    };
+    document.querySelectorAll('.product-img[data-cat], .detail-img-wrap[data-cat]').forEach(el => {
+      const cat = el.dataset.cat || '';
+      let colors = ['#374151','#6b7280'];
+      for(const [key,val] of Object.entries(catColors)){
+        if(cat.includes(key)){ colors=val; break; }
+      }
+      el.style.background = 'linear-gradient(135deg,' + colors[0] + ',' + colors[1] + ')';
+    });
+    </script>
+</body>
+</html>

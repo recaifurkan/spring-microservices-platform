@@ -1,0 +1,32 @@
+# =============================================
+# acs-service — local profile (PostgreSQL)
+# Activate with: --spring.profiles.active=local  (manage.sh --env local)
+# =============================================
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/acsdb
+    driver-class-name: org.postgresql.Driver
+    username: ${POSTGRES_USER:app}
+    password: ${POSTGRES_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    repair-on-migrate: true
+
+  h2:
+    console:
+      enabled: false
+

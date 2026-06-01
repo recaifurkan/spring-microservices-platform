@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{cart.title}">My Cart – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="card">
+        <div class="card-header">
+            <div class="page-header" style="margin:0">
+                <h2 th:text="#{cart.heading}">🛒 My Cart</h2>
+                <p th:if="${data.items != null}"
+                   th:text="${data.items.size()} + ' ' + #{common.units}"></p>
+            </div>
+            <a th:href="@{/products}" class="btn btn-secondary btn-sm"
+               th:text="#{cart.continueShopping}">← Continue Shopping</a>
+        </div>
+
+        <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+        <th:block th:replace="~{fragments/alerts :: success(${data.success})}"></th:block>
+
+        <div class="empty-state" th:if="${data.items == null or data.items.empty}">
+            <p th:text="#{cart.empty}">Your cart is empty.</p>
+            <a th:href="@{/products}" class="btn btn-primary" th:text="#{cart.goToProducts}">🛍️ Go to Products</a>
+        </div>
+
+        <div th:unless="${data.items == null or data.items.empty}">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th th:text="#{cart.col.product}">Product</th>
+                            <th th:text="#{cart.col.unitPrice}">Unit Price</th>
+                            <th th:text="#{cart.col.qty}">Qty</th>
+                            <th th:text="#{cart.col.total}">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${data.items}">
+                            <td><strong th:text="${item['productName']}">Product</strong></td>
+                            <td th:text="'₺' + ${item['productPrice']}">₺0.00</td>
+                            <td>
+                                <form th:action="@{/cart/update}" method="post" style="display:inline-flex;gap:4px;align-items:center">
+                                    <input type="hidden" name="productId" th:value="${item['productId']}">
+                                    <input type="number" name="quantity" th:value="${item['quantity']}"
+                                           min="1" style="width:65px;padding:4px 8px;border:1px solid #ddd;border-radius:4px">
+                                    <button type="submit" class="btn btn-secondary btn-sm">↻</button>
+                                </form>
+                            </td>
+                            <td><strong th:text="'₺' + ${item['subtotal']}">₺0.00</strong></td>
+                            <td>
+                                <form th:action="@{/cart/remove}" method="post">
+                                    <input type="hidden" name="productId" th:value="${item['productId']}">
+                                    <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8f9fa">
+                            <td colspan="3" style="text-align:right;font-weight:600;padding:14px"
+                                th:text="#{cart.total.label}">Total Amount:</td>
+                            <td colspan="2" style="font-size:1.3rem;font-weight:700;color:#27ae60;padding:14px">
+                                ₺<span th:text="${data.total}">0.00</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+                <form th:action="@{/cart/clear}" method="post">
+                    <button type="submit" class="btn btn-secondary" th:text="#{cart.clear}">🗑️ Clear Cart</button>
+                </form>
+                <a th:href="@{/checkout}" class="btn btn-primary" style="font-size:1rem;padding:12px 28px"
+                   th:text="#{cart.checkout}">💳 Proceed to Checkout →</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

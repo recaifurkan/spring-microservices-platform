@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand">Shop<span>Micro</span></div>
+        <p class="footer-desc" th:text="#{footer.desc}">Modern e-commerce platform...</p>
+        <div style="display:flex;gap:10px;font-size:1.3rem">🛍️ 📦 💳 🔔 🔐</div>
+      </div>
+      <div class="footer-col">
+        <h4 th:text="#{footer.shopping}">Shopping</h4>
+        <ul>
+          <li><a th:href="@{/products}"                              th:text="#{footer.allProducts}">All Products</a></li>
+          <li><a th:href="@{/products(category='Elektronik')}">Elektronik</a></li>
+          <li><a th:href="@{/products(category='Giyim & Moda')}"    th:text="#{footer.fashion}">Fashion</a></li>
+          <li><a th:href="@{/products(category='Spor & Outdoor')}"   th:text="#{footer.sports}">Sports</a></li>
+          <li><a th:href="@{/products(sort='price_asc')}"            th:text="#{footer.dealProducts}">Deal Products</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 th:text="#{footer.myAccount}">My Account</h4>
+        <ul>
+          <li><a th:href="@{/dashboard}"      th:text="#{footer.dashboard}">Dashboard</a></li>
+          <li><a th:href="@{/orders}"         th:text="#{footer.myOrders}">My Orders</a></li>
+          <li><a th:href="@{/payments}"       th:text="#{footer.myPayments}">My Payments</a></li>
+          <li><a th:href="@{/notifications}"  th:text="#{footer.notifications}">Notifications</a></li>
+          <li><a th:href="@{/profile}"        th:text="#{footer.profileInfo}">Profile Settings</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 th:text="#{footer.services}">Services</h4>
+        <ul>
+          <li><a href="http://localhost:9000/h2-console" target="_blank">Auth DB Console</a></li>
+          <li><a href="http://localhost:8761" target="_blank">Eureka Discovery</a></li>
+          <li><a href="http://localhost:8084/swagger-ui/index.html" target="_blank">Product API</a></li>
+          <li><a href="http://localhost:8085/swagger-ui/index.html" target="_blank">Order API</a></li>
+          <li><a href="http://localhost:8090/actuator" target="_blank">Gateway Actuator</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span th:text="#{footer.copyright}">© 2026 ShopMicro</span>
+      <div class="footer-payments">
+        <span class="pay-icon">VISA</span>
+        <span class="pay-icon">MC</span>
+        <span class="pay-icon">AMEX</span>
+        <span class="pay-icon">TL</span>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

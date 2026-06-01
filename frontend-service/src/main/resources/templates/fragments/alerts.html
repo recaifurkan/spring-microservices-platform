@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Kullanım: th:replace="~{fragments/alerts :: error(${error})}" -->
+<div th:fragment="error(message)" th:if="${message != null and !#strings.isEmpty(message)}"
+     class="alert alert-danger" th:text="${message}"></div>
+
+<div th:fragment="success(message)" th:if="${message != null and !#strings.isEmpty(message)}"
+     class="alert alert-success" th:text="${message}"></div>
+
+<div th:fragment="info(message)" th:if="${message != null and !#strings.isEmpty(message)}"
+     class="alert alert-info" th:text="${message}"></div>
+
+</body>
+</html>
+

@@ -1,0 +1,42 @@
+# ─── Build Output ────────────────────────────────────────
+target/
+**/target/
+*.jar
+*.war
+*.ear
+
+# ─── IDE ─────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+.settings/
+
+# ─── Environment & Secrets ───────────────────────────────
+.env
+
+# ─── macOS ───────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ─── Logs & PID ──────────────────────────────────────────
+logs/
+**/logs/
+*.log
+*.log.gz
+**/*.log
+**/*.log.gz
+*.pid
+**/*.pid
+
+# ─── H2 Database Files ───────────────────────────────────
+data/
+**/data/
+**/*.mv.db
+**/*.lock.db
+**/*.trace.db
+
+# ─── Docker volumes ──────────────────────────────────────
+docker/pgadmin/pgadmin-data/
+

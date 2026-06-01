@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>3DS Sonuç</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a1628; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #fff; border-radius: 16px; padding: 40px; text-align: center; width: 380px; max-width: 95vw; }
+        .icon { font-size: 4rem; margin-bottom: 16px; }
+        h2 { color: #333; font-size: 1.3rem; }
+        p { color: #666; margin: 8px 0 24px; font-size: 0.9rem; }
+    </style>
+    <meta http-equiv="refresh" content="3">
+</head>
+<body>
+<div class="card">
+    <div class="icon" th:text="${status == 'SUCCESS' ? '✅' : '❌'}">✅</div>
+    <h2 th:text="${status == 'SUCCESS' ? 'Ödeme Onaylandı!' : 'Ödeme Başarısız'}">Sonuç</h2>
+    <p>Yönlendiriliyorsunuz...</p>
+</div>
+</body>
+</html>
+

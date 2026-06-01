@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${data.product['name']} + ' – ShopMicro'">Product – ShopMicro</title>
+</head>
+<body>
+<main>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a th:href="@{/}" th:text="#{breadcrumb.home}">Home</a>
+        <span>›</span>
+        <a th:href="@{/products}" th:text="#{breadcrumb.products}">Products</a>
+        <span th:if="${data.product['category']}">›</span>
+        <a th:if="${data.product['category']}"
+           th:href="@{/products(category=${data.product['category']})}"
+           th:text="${data.product['category']}">Category</a>
+        <span>›</span>
+        <span th:text="${data.product['name']}">Product</span>
+    </nav>
+
+    <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+    <!-- ── Main detail layout ── -->
+    <div class="detail-layout">
+
+        <!-- LEFT: Product image -->
+        <div class="detail-img-wrap" th:attr="data-cat=${data.product['category']}">
+            <div class="d-emoji" th:text="${
+                data.product['category'] != null and data.product['category'].contains('Elektronik') ? '💻' :
+                data.product['category'] != null and data.product['category'].contains('Giyim')      ? '👕' :
+                data.product['category'] != null and data.product['category'].contains('Kitap')      ? '📚' :
+                data.product['category'] != null and data.product['category'].contains('Spor')       ? '⚽' :
+                data.product['category'] != null and data.product['category'].contains('Ev')         ? '🏠' :
+                data.product['category'] != null and data.product['category'].contains('Kozmetik')   ? '💄' :
+                data.product['category'] != null and data.product['category'].contains('Aksesuar')   ? '🎒' :
+                '📦'}">📦</div>
+            <div class="d-category-tag" th:if="${data.product['category']}" th:text="${data.product['category']}">Category</div>
+
+            <div th:if="${data.product['discountPercent'] != null and data.product['discountPercent'] > 0}"
+                 style="margin-top:12px">
+                <span class="badge badge-danger"
+                      th:text="'%' + ${data.product['discountPercent']} + ' ' + #{product.discount.badge}">Discount</span>
+            </div>
+        </div>
+
+        <!-- RIGHT: Product info -->
+        <div class="detail-info">
+
+            <div class="detail-category" th:text="${data.product['category']}">Category</div>
+            <h1 class="detail-name" th:text="${data.product['name']}">Product Name</h1>
+            <div class="detail-brand" th:if="${data.product['brand']}">
+                <span th:text="#{product.brand.label}">Brand:</span>
+                <strong th:text="${data.product['brand']}">Brand</strong>
+            </div>
+
+            <!-- Stars -->
+            <div class="detail-stars">
+                <span class="s-visual">
+                    <th:block th:with="r=${data.product['rating'] != null ? data.product['rating'] : 0}">
+                        <span th:each="i : ${#numbers.sequence(1,5)}"
+                              th:text="${i <= r} ? '★' : '☆'">★</span>
+                    </th:block>
+                </span>
+                <span class="s-score" th:text="${data.product['rating'] != null ? #numbers.formatDecimal(data.product['rating'],1,1) : '0.0'}">4.5</span>
+                <span class="s-count" th:text="'(' + ${data.product['reviewCount'] != null ? data.product['reviewCount'] : 0} + ' ' + #{product.reviews.suffix} + ')'"></span>
+            </div>
+
+            <!-- Price block -->
+            <div class="detail-price-block">
+                <div class="detail-price-row">
+                    <span class="detail-price-current"
+                          th:text="'₺' + ${#numbers.formatDecimal(data.product['price'],1,2)}">₺0.00</span>
+                    <th:block th:if="${data.product['discountPercent'] != null and data.product['discountPercent'] > 0}">
+                        <span class="detail-price-original"
+                              th:text="'₺' + ${#numbers.formatDecimal(data.product['originalPrice'],1,2)}"></span>
+                        <span class="detail-discount-badge"
+                              th:text="'%' + ${data.product['discountPercent']} + ' ' + #{product.discount.badge}"></span>
+                    </th:block>
+                </div>
+                <div th:if="${data.product['discountPercent'] != null and data.product['discountPercent'] > 0}"
+                     class="detail-saving" style="margin-top:6px"
+                     th:text="'₺' + ${#numbers.formatDecimal(data.product['originalPrice'] - data.product['price'],1,2)} + ' ' + #{product.saving}"></div>
+            </div>
+
+            <!-- Stock status -->
+            <div class="detail-stock">
+                <th:block th:if="${data.product['stock'] != null and data.product['stock'] > 10}">
+                    <span>✅</span>
+                    <span class="stock-ok fw-600" th:text="#{product.stock.available.label}">In Stock</span>
+                    <span class="text-muted" th:text="'(' + ${data.product['stock']} + ' ' + #{common.units} + ')'"></span>
+                </th:block>
+                <th:block th:if="${data.product['stock'] != null and data.product['stock'] > 0 and data.product['stock'] <= 10}">
+                    <span>⚠️</span>
+                    <span class="stock-low fw-600" th:text="#{product.stock.low.label}">Last Few Items!</span>
+                    <span class="text-muted">
+                        <span th:text="#{product.stock.only}">Only</span>
+                        <span th:text="${data.product['stock']}"></span>
+                        <span th:text="#{product.stock.left}">items left</span>
+                    </span>
+                </th:block>
+                <th:block th:if="${data.product['stock'] == null or data.product['stock'] == 0}">
+                    <span>❌</span>
+                    <span class="stock-out fw-600" th:text="#{product.stock.out.label}">Out of Stock</span>
+                </th:block>
+            </div>
+
+            <!-- Add to cart form — hem misafir hem giriş yapmış kullanıcı için -->
+            <form th:action="@{/cart/add}" method="post"
+                  th:if="${data.product['stock'] != null and data.product['stock'] > 0}">
+                <input type="hidden" name="productId" th:value="${data.product['id']}">
+                <input type="hidden" name="returnTo" th:value="'/products/' + ${data.product['id']}">
+                <div class="detail-qty-row">
+                    <div class="qty-control">
+                        <button type="button" class="qty-btn" id="qtyMinus">−</button>
+                        <input class="qty-val" type="number" name="quantity" id="qtyVal"
+                               value="1" min="1"
+                               th:max="${data.product['stock'] != null ? data.product['stock'] : 1}">
+                        <button type="button" class="qty-btn" id="qtyPlus">+</button>
+                    </div>
+                    <span class="text-muted" style="font-size:.83rem" th:text="#{product.qty.units}">units</span>
+                </div>
+                <div class="detail-actions">
+                    <button type="submit" class="btn btn-primary btn-lg btn-block"
+                            th:text="#{product.addToCart}">🛒 Add to Cart</button>
+                    <a th:href="@{/cart}" class="btn btn-outline btn-lg btn-block"
+                       th:text="#{product.goToCart}">🛍️ Go to Cart</a>
+                </div>
+            </form>
+
+            <!-- Stok yoksa -->
+            <div th:if="${data.product['stock'] == null or data.product['stock'] == 0}"
+                 class="alert alert-info" style="margin-top:14px">
+                <span th:text="#{product.stock.out.label}">Out of Stock</span>
+            </div>
+
+            <!-- Feature badges -->
+            <div class="detail-features" style="margin-top:10px">
+                <div class="detail-feature">
+                    <span class="df-icon">🚚</span>
+                    <span><strong th:text="#{product.feature.freeShipping}">Free Shipping</strong>
+                    <span th:text="#{product.feature.freeShippingDesc}"> — on orders over ₺500</span></span>
+                </div>
+                <div class="detail-feature">
+                    <span class="df-icon">↩️</span>
+                    <span><strong th:text="#{product.feature.return}">30-Day Return Guarantee</strong>
+                    <span th:text="#{product.feature.returnDesc}"> — Unconditional return</span></span>
+                </div>
+                <div class="detail-feature">
+                    <span class="df-icon">🔒</span>
+                    <span><strong th:text="#{product.feature.secure}">Secure Payment</strong>
+                    <span th:text="#{product.feature.secureDesc}"> — SSL protected</span></span>
+                </div>
+                <div class="detail-feature">
+                    <span class="df-icon">📞</span>
+                    <span><strong th:text="#{product.feature.support}">24/7 Support</strong>
+                    <span th:text="#{product.feature.supportDesc}"> — Customer service</span></span>
+                </div>
+            </div>
+
+        </div><!-- /.detail-info -->
+    </div><!-- /.detail-layout -->
+
+    <!-- ── Tabs ── -->
+    <div class="detail-tabs">
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="tab-desc" th:text="#{product.tab.description}">📝 Product Description</button>
+            <button class="tab-btn" data-tab="tab-specs" th:text="#{product.tab.specs}">📋 Specifications</button>
+            <button class="tab-btn" data-tab="tab-reviews">
+                <span th:text="#{product.tab.reviews}">⭐ Reviews</span>
+                <span th:if="${data.product['reviewCount'] != null and data.product['reviewCount'] > 0}"
+                      th:text="'(' + ${data.product['reviewCount']} + ')'"></span>
+            </button>
+        </div>
+
+        <div id="tab-desc" class="tab-panel active">
+            <p th:if="${data.product['description'] != null and !#strings.isEmpty(data.product['description'])}"
+               th:text="${data.product['description']}">Loading description...</p>
+            <p th:unless="${data.product['description'] != null and !#strings.isEmpty(data.product['description'])}"
+               class="text-muted" th:text="#{product.desc.empty}">No description available.</p>
+        </div>
+
+        <div id="tab-specs" class="tab-panel">
+            <table style="width:auto;max-width:500px">
+                <tr>
+                    <th style="width:170px" th:text="#{product.specs.name}">Product Name</th>
+                    <td th:text="${data.product['name']}">—</td>
+                </tr>
+                <tr th:if="${data.product['brand']}">
+                    <th th:text="#{common.brand}">Brand</th>
+                    <td th:text="${data.product['brand']}">—</td>
+                </tr>
+                <tr th:if="${data.product['category']}">
+                    <th th:text="#{common.category}">Category</th>
+                    <td th:text="${data.product['category']}">—</td>
+                </tr>
+                <tr>
+                    <th th:text="#{common.stock}">Stock</th>
+                    <td th:text="${data.product['stock']} + ' ' + #{common.units}">0</td>
+                </tr>
+                <tr th:if="${data.product['createdAt']}">
+                    <th th:text="#{product.specs.addedDate}">Date Added</th>
+                    <td th:text="${#strings.length(data.product['createdAt']) >= 10
+                                   ? #strings.substring(data.product['createdAt'],8,10) + '.'
+                                   + #strings.substring(data.product['createdAt'],5,7) + '.'
+                                   + #strings.substring(data.product['createdAt'],0,4)
+                                   : data.product['createdAt']}">—</td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="tab-reviews" class="tab-panel">
+            <th:block th:if="${data.product['reviewCount'] != null and data.product['reviewCount'] > 0}">
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="review-avatar">C</div>
+                        <div>
+                            <div class="review-name" th:text="#{product.review.customer}">Customer</div>
+                            <div class="review-date" th:text="#{product.review.verified}">Verified Buyer</div>
+                        </div>
+                        <span class="review-stars" style="margin-left:auto">★★★★★</span>
+                    </div>
+                    <p class="review-text" th:text="#{product.review.text}">Quality product, fast delivery.</p>
+                </div>
+            </th:block>
+            <div class="empty-state" th:if="${data.product['reviewCount'] == null or data.product['reviewCount'] == 0}">
+                <div class="es-icon">⭐</div>
+                <p th:text="#{product.review.empty}">No reviews yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Related Products ── -->
+    <div class="section" th:if="${data.related != null and !data.related.empty}">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="title-bar"></span>
+                <span th:text="#{product.related.title}">🔗 Related Products</span>
+            </div>
+            <a th:href="@{/products(category=${data.product['category']})}" class="section-link"
+               th:text="#{common.seeAll}">See All →</a>
+        </div>
+        <div class="product-grid">
+            <th:block th:each="p : ${data.related}" th:if="${p != null}">
+                <div th:replace="~{fragments/product-card :: card(${p}, '/products/' + ${data.product['id']})}"></div>
+            </th:block>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

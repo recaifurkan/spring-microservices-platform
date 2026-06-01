@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{order.detail.title}">Order Detail – ShopMicro</title>
+</head>
+<body>
+<main>
+    <div class="container-sm">
+
+        <div style="margin-bottom:16px">
+            <a th:href="@{/orders}" class="btn btn-secondary btn-sm"
+               th:text="#{order.backToOrders}">← Back to My Orders</a>
+        </div>
+
+        <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="page-header" style="margin:0">
+                    <h2 th:text="'📦 Order #' + ${data.order['id']}">Order #</h2>
+                    <p th:text="${#strings.substring(data.order['createdAt']?.toString(), 0, 16)}">Date</p>
+                </div>
+                <span th:with="s=${data.order['status']}"
+                      th:class="${s == 'DELIVERED' ? 'badge badge-success' :
+                                 s == 'CONFIRMED' || s == 'SHIPPED' ? 'badge badge-info' :
+                                 s == 'PENDING' ? 'badge badge-warning' :
+                                 s == 'CANCELLED' ? 'badge badge-danger' : 'badge badge-secondary'}"
+                      style="font-size:1rem;padding:6px 14px"
+                      th:text="${s}">PENDING</span>
+            </div>
+
+            <!-- Product Info -->
+            <div style="padding:24px;border-bottom:1px solid #eee">
+                <h3 style="margin-bottom:16px;color:#2c3e50" th:text="#{order.productInfo.title}">🛒 Product Info</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div>
+                        <p style="color:#7f8c8d;font-size:0.85rem;margin-bottom:4px"
+                           th:text="#{order.productInfo.name}">Product Name</p>
+                        <p style="font-weight:600;font-size:1.1rem" th:text="${data.order['productName']}">—</p>
+                    </div>
+                    <div th:if="${data.product != null and !data.product.isEmpty()}">
+                        <p style="color:#7f8c8d;font-size:0.85rem;margin-bottom:4px"
+                           th:text="#{order.productInfo.category}">Category</p>
+                        <p style="font-weight:600" th:text="${data.product['category'] ?: '—'}">—</p>
+                    </div>
+                    <div th:if="${data.product != null and data.product['description'] != null and !data.product['description'].toString().isBlank()}">
+                        <p style="color:#7f8c8d;font-size:0.85rem;margin-bottom:4px"
+                           th:text="#{order.productInfo.desc}">Description</p>
+                        <p th:text="${data.product['description']}">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order summary -->
+            <div style="padding:24px">
+                <h3 style="margin-bottom:16px;color:#2c3e50" th:text="#{order.summary.title}">📋 Order Summary</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td style="color:#7f8c8d;width:180px" th:text="#{order.col.orderNo}">Order No</td>
+                            <td><strong th:text="'#' + ${data.order['id']}">—</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.product}">Product</td>
+                            <td th:text="${data.order['productName']}">—</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.qty}">Qty</td>
+                            <td th:text="${data.order['quantity']}">—</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.totalAmount}">Total Amount</td>
+                            <td><strong style="color:#27ae60;font-size:1.1rem"
+                                        th:text="'₺' + ${data.order['totalPrice']}">—</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.status}">Status</td>
+                            <td>
+                                <span th:with="s=${data.order['status']}"
+                                      th:class="${s == 'DELIVERED' ? 'badge badge-success' :
+                                                 s == 'CONFIRMED' || s == 'SHIPPED' ? 'badge badge-info' :
+                                                 s == 'PENDING' ? 'badge badge-warning' :
+                                                 s == 'CANCELLED' ? 'badge badge-danger' : 'badge badge-secondary'}"
+                                      th:text="${s}">—</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.createdAt}">Created At</td>
+                            <td th:text="${#strings.substring(data.order['createdAt']?.toString(), 0, 16)}">—</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#7f8c8d" th:text="#{order.col.updatedAt}">Updated At</td>
+                            <td th:text="${#strings.substring(data.order['updatedAt']?.toString(), 0, 16)}">—</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Cancel button (PENDING orders only) -->
+                <div th:if="${data.order['status'] == 'PENDING'}" style="margin-top:24px">
+                    <form th:action="@{/orders/{id}/cancel(id=${data.order['id']})}" method="post"
+                          th:onsubmit="'return confirm(\'' + #{order.cancel.confirm} + '\')'">
+                        <button type="submit" class="btn btn-sm" style="background:#e74c3c;color:white"
+                                th:text="#{order.cancel.btn}">❌ Cancel Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="quick-actions" style="margin-top:16px">
+            <a th:href="@{/orders}"   class="btn btn-secondary" th:text="#{order.allOrders}">📦 All Orders</a>
+            <a th:href="@{/payments}" class="btn btn-secondary" th:text="#{order.myPayments}">💳 My Payments</a>
+            <a th:href="@{/products}" class="btn btn-primary"   th:text="#{order.continueShopping}">🛍️ Continue Shopping</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

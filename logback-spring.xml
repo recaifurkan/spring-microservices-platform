@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Central Logback configuration - single file for all services
+  Location: spring-auth-demo/logback-spring.xml (repository root)
+
+  Loaded through the global Config Server application.yml:
+    logging.config: file:../logback-spring.xml
+
+  Services run from their own subdirectories (for example order-service/),
+  so "../logback-spring.xml" resolves to the repository root.
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Map spring.application.name to the appName variable -->
+    <springProperty scope="context" name="appName"
+                    source="spring.application.name"
+                    defaultValue="application"/>
+
+    <!-- Log file path: ./logs/<service-name>.log -->
+    <property name="LOG_PATH" value="${LOG_PATH:-./logs}"/>
+
+    <!--
+      LOG_PATTERN:
+        %d          → date/time (millisecond precision)
+        %-5level    → log level (aligned)
+        [appName,traceId,spanId]  → distributed tracing metadata
+        [%t]        → thread name (truncated)
+        %logger{36} → logger class name (shortened package path)
+        %msg%n      → message + newline
+        %xEx        → exception (wrapped, full stack trace)
+    -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [${appName},%X{traceId:-},%X{spanId:-}] [%15.15t] %-40.40logger{39} : %msg%n%xEx"/>
+
+    <!-- ── CONSOLE APPENDER ────────────────────────────────────────────── -->
+    <!-- ANSI codes are not needed because manage.sh redirects console output to files -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ── FILE APPENDER (Rolling) ────────────────────────────────────── -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${appName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Daily + size-based rotation; old files are compressed with gzip -->
+            <fileNamePattern>${LOG_PATH}/${appName}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Wrap the FILE appender with AsyncAppender so I/O does not block logging -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <!-- ── LOKI APPENDER ─────────────────────────────────────────────── -->
+    <!-- Sends logs asynchronously to Loki on port 3100 over HTTP.       -->
+    <!-- traceId / spanId are read automatically from MDC.               -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://localhost:3100/loki/api/v1/push</url>
+            <connectionTimeoutMs>5000</connectionTimeoutMs>
+            <requestTimeoutMs>5000</requestTimeoutMs>
+        </http>
+        <format>
+            <label>
+                <pattern>app=${appName},level=%level</pattern>
+            </label>
+            <message>
+                <pattern>traceId=%X{traceId:-none} spanId=%X{spanId:-none} level=%level app=${appName} logger=%logger{36} thread=%thread msg=%msg%n%xEx</pattern>
+            </message>
+        </format>
+    </appender>
+
+    <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOKI"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <!-- ── LOGGER SETTINGS ────────────────────────────────────────────── -->
+
+    <!-- Application code: INFO level logging (business logs at INFO, technical debug at TRACE) -->
+    <logger name="com.example" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_LOKI"/>
+    </logger>
+
+    <!-- Feign requests: com.example.*.client should be DEBUG for FULL mode -->
+    <!-- feign.Logger emits the real request/response logs (FULL is configured in Feign) -->
+    <logger name="feign" level="INFO"/>
+
+    <!-- Hibernate SQL: active only when show-sql=true -->
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="WARN"/>
+
+    <!-- Eureka / Netflix: suppress overly noisy heartbeat logs -->
+    <logger name="com.netflix" level="WARN"/>
+    <logger name="org.springframework.cloud.netflix.eureka" level="WARN"/>
+    <logger name="com.netflix.discovery" level="WARN"/>
+    <logger name="com.netflix.eureka" level="WARN"/>
+
+    <!-- Spring Security details: WARN (raise to DEBUG if needed) -->
+    <logger name="org.springframework.security" level="WARN"/>
+
+    <!-- OTel / Micrometer internal logs -->
+    <logger name="io.opentelemetry" level="WARN"/>
+    <logger name="io.micrometer.tracing" level="WARN"/>
+
+    <!-- HTTP request/response details (can be set to DEBUG during development) -->
+    <logger name="org.springframework.web.client" level="WARN"/>
+    <logger name="org.springframework.web.HttpLogging" level="WARN"/>
+
+    <!-- ── ROOT LOGGER ─────────────────────────────────────────────────── -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+        <appender-ref ref="ASYNC_LOKI"/>
+    </root>
+
+    <!-- ── PROFILE-BASED SETTINGS ─────────────────────────────────────── -->
+    <springProfile name="dev,local">
+        <!-- Development profile: com.example classes at DEBUG (excluding low-level TRACE logs) -->
+        <logger name="com.example" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_LOKI"/>
+        </logger>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_LOKI"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <!-- Production: INFO, console disabled, file only -->
+        <appender name="CONSOLE_PROD" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <!-- JSON format in production (ELK/Grafana friendly) -->
+                <pattern>{"ts":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}","level":"%level","app":"${appName}","traceId":"%X{traceId:-}","spanId":"%X{spanId:-}","thread":"%t","logger":"%logger{50}","msg":"%msg"}%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PROD"/>
+            <appender-ref ref="ASYNC_FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

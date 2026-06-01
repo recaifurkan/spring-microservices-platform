@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="#{products.title}">Products – ShopMicro</title>
+</head>
+<body>
+<main>
+
+    <th:block th:replace="~{fragments/alerts :: error(${data.error})}"></th:block>
+    <th:block th:replace="~{fragments/alerts :: success(${data.success})}"></th:block>
+
+    <!-- Active filter tags -->
+    <div class="filter-tags" th:if="${data.search != null or data.category != null or data.minPrice != null or data.maxPrice != null}">
+        <span th:if="${data.category != null}" class="filter-tag">
+            <span th:text="${@catMeta.emoji(data.category) + ' ' + data.category}"></span>
+            <a th:href="@{/products(search=${data.search},sort=${data.sort},minPrice=${data.minPrice},maxPrice=${data.maxPrice})}" class="filter-tag-x">✕</a>
+        </span>
+        <span th:if="${data.search != null}" class="filter-tag">
+            🔍 <span th:text="${data.search}"></span>
+            <a th:href="@{/products(category=${data.category},sort=${data.sort})}" class="filter-tag-x">✕</a>
+        </span>
+        <span th:if="${data.minPrice != null or data.maxPrice != null}" class="filter-tag">
+            💰 <span th:text="'₺' + (${data.minPrice} ?: '0') + ' – ₺' + (${data.maxPrice} ?: '∞')"></span>
+            <a th:href="@{/products(category=${data.category},search=${data.search},sort=${data.sort})}" class="filter-tag-x">✕</a>
+        </span>
+        <a th:href="@{/products}" class="btn btn-outline btn-sm" th:text="#{products.filter.clearAll}">Clear Filters</a>
+    </div>
+
+    <div class="products-layout">
+
+        <!-- ── FILTER SIDEBAR ── -->
+        <aside class="filter-sidebar">
+
+            <h3 th:text="#{products.filter.categories}">Categories</h3>
+            <div class="filter-group">
+                <a th:href="@{/products(search=${data.search},sort=${data.sort},minPrice=${data.minPrice},maxPrice=${data.maxPrice})}"
+                   class="filter-link" th:classappend="${data.category == null ? ' active' : ''}"
+                   th:text="#{products.filter.all}">All</a>
+                <th:block th:if="${globalCategories != null}">
+                    <a th:each="cat : ${globalCategories}"
+                       th:href="@{/products(category=${cat},search=${data.search},sort=${data.sort},minPrice=${data.minPrice},maxPrice=${data.maxPrice})}"
+                       class="filter-link"
+                       th:classappend="${data.category == cat ? ' active' : ''}"
+                       th:text="${@catMeta.emoji(cat) + ' ' + cat}">Category</a>
+                </th:block>
+            </div>
+
+            <!-- Price range -->
+            <div class="filter-group">
+                <div class="filter-group-title" th:text="#{products.filter.priceRange}">Price Range</div>
+                <form th:action="@{/products}" method="get">
+                    <input type="hidden" name="category" th:value="${data.category}">
+                    <input type="hidden" name="search"   th:value="${data.search}">
+                    <input type="hidden" name="sort"     th:value="${data.sort}">
+                    <div class="price-inputs">
+                        <div class="price-inputs-row">
+                            <span class="price-inputs-label">Min</span>
+                            <input type="number" name="minPrice" placeholder="₺ 0"
+                                   th:value="${data.minPrice}" min="0">
+                        </div>
+                        <div class="price-inputs-row">
+                            <span class="price-inputs-label">Max</span>
+                            <input type="number" name="maxPrice" placeholder="₺ ∞"
+                                   th:value="${data.maxPrice}" min="0">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm btn-block"
+                            style="margin-top:10px" th:text="#{products.filter.apply}">Apply</button>
+                </form>
+            </div>
+
+            <!-- Sort -->
+            <div class="filter-group">
+                <div class="filter-group-title" th:text="#{products.filter.sort}">Sort</div>
+                <form th:action="@{/products}" method="get" id="sortForm">
+                    <input type="hidden" name="category"  th:value="${data.category}">
+                    <input type="hidden" name="search"    th:value="${data.search}">
+                    <input type="hidden" name="minPrice"  th:value="${data.minPrice}">
+                    <input type="hidden" name="maxPrice"  th:value="${data.maxPrice}">
+                    <label class="sort-radio"><input type="radio" name="sort" value=""           th:checked="${data.sort == null or data.sort == ''}"  onchange="this.form.submit()"> <span th:text="#{products.sort.default}">Default</span></label>
+                    <label class="sort-radio"><input type="radio" name="sort" value="price_asc"  th:checked="${data.sort == 'price_asc'}"              onchange="this.form.submit()"> <span th:text="#{products.sort.priceLow}">💸 Lowest Price</span></label>
+                    <label class="sort-radio"><input type="radio" name="sort" value="price_desc" th:checked="${data.sort == 'price_desc'}"             onchange="this.form.submit()"> <span th:text="#{products.sort.priceHigh}">💰 Highest Price</span></label>
+                    <label class="sort-radio"><input type="radio" name="sort" value="rating"     th:checked="${data.sort == 'rating'}"                 onchange="this.form.submit()"> <span th:text="#{products.sort.rating}">⭐ Top Rated</span></label>
+                    <label class="sort-radio"><input type="radio" name="sort" value="newest"     th:checked="${data.sort == 'newest'}"                 onchange="this.form.submit()"> <span th:text="#{products.sort.newest}">🆕 Newest</span></label>
+                </form>
+            </div>
+        </aside>
+
+        <!-- ── PRODUCT LIST ── -->
+        <div>
+            <!-- Sort bar / result info -->
+            <div class="sort-bar">
+                <span class="sort-bar-result">
+                    <strong th:text="${data.products != null ? data.products.size() : 0}">0</strong>
+                    <span th:text="#{products.result.found}"> products found</span>
+                    <th:block th:if="${data.search != null}"> &quot;<span th:text="${data.search}"></span>&quot;</th:block>
+                    <th:block th:if="${data.category != null}"> — <span th:text="${data.category}"></span></th:block>
+                </span>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button id="mobileFilterBtn" class="btn btn-outline btn-sm mobile-filter-btn"
+                            th:text="#{products.filter.btn}">⚙️ Filter</button>
+                    <a th:href="@{/cart}" class="btn btn-success btn-sm">
+                        <span th:text="#{products.cart.btn}">🛒 My Cart</span>
+                        <span th:if="${data.cartCount > 0}"
+                              th:text="'(' + ${data.cartCount} + ')'"></span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state" th:if="${data.products == null or data.products.empty}">
+                <div class="es-icon">🔍</div>
+                <p th:text="#{products.empty}">No products found matching your search.</p>
+                <a th:href="@{/products}" class="btn btn-primary" th:text="#{products.viewAll}">View All Products</a>
+            </div>
+
+            <!-- Product grid -->
+            <div class="product-grid" th:unless="${data.products == null or data.products.empty}">
+                <th:block th:each="p : ${data.products}" th:if="${p != null}">
+                    <div th:replace="~{fragments/product-card :: card(${p}, ${returnTo})}"></div>
+                </th:block>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

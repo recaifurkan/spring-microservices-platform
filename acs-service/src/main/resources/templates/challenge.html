@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Secure Doğrulama</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a1628; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .acs-card { background: #fff; border-radius: 16px; padding: 40px; width: 420px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .acs-header { text-align: center; margin-bottom: 28px; }
+        .acs-logo { font-size: 2.5rem; margin-bottom: 8px; }
+        .acs-header h1 { font-size: 1.3rem; color: #1a1a2e; margin-bottom: 4px; }
+        .acs-header p { font-size: 0.85rem; color: #666; }
+        .bank-badge { display: inline-block; background: linear-gradient(135deg, #1a237e, #283593); color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; margin-bottom: 24px; }
+        .txn-info { background: #f5f7ff; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+        .txn-info .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.88rem; }
+        .txn-info .row:last-child { margin-bottom: 0; font-weight: 700; font-size: 1rem; color: #1a237e; }
+        .otp-label { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .otp-hint { font-size: 0.78rem; color: #888; margin-bottom: 14px; }
+        .otp-input { width: 100%; padding: 14px; font-size: 1.6rem; text-align: center; letter-spacing: 12px; border: 2px solid #ddd; border-radius: 8px; outline: none; transition: border-color 0.2s; }
+        .otp-input:focus { border-color: #1a237e; }
+        .alert-danger { background: #fde8e8; color: #c62828; padding: 10px 14px; border-radius: 6px; font-size: 0.88rem; margin-bottom: 16px; border-left: 3px solid #e53935; }
+        .btn-verify { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a237e, #283593); color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; margin-top: 16px; }
+        .btn-verify:hover { opacity: 0.9; }
+        .footer-note { text-align: center; margin-top: 20px; font-size: 0.75rem; color: #999; }
+        .secure-icons { display: flex; justify-content: center; gap: 16px; margin-top: 14px; color: #aaa; font-size: 0.75rem; }
+        .attempts-bar { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+        .attempt-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; }
+        .attempt-dot.used { background: #e53935; }
+        .attempt-dot.ok { background: #2e7d32; }
+    </style>
+</head>
+<body>
+<div class="acs-card">
+    <div class="acs-header">
+        <div class="acs-logo">🔐</div>
+        <div class="bank-badge">3D SECURE</div>
+        <h1>Kimlik Doğrulama</h1>
+        <p>Güvenli ödeme için OTP kodunuzu girin</p>
+    </div>
+
+    <div th:if="${txn != null}">
+        <div class="txn-info">
+            <div class="row"><span>Mağaza</span><span th:text="${txn.merchantName}">Mağaza</span></div>
+            <div class="row"><span>İşlem</span><span th:text="${#strings.substring(txn.transactionId, 0, 16) + '...'}">TXN</span></div>
+            <div class="row"><span>Tutar</span><span th:text="'₺' + ${txn.amount}">₺0.00</span></div>
+        </div>
+
+        <!-- Deneme göstergesi -->
+        <div class="attempts-bar">
+            <div th:class="${txn.attempts >= 1 ? 'attempt-dot used' : 'attempt-dot'}"></div>
+            <div th:class="${txn.attempts >= 2 ? 'attempt-dot used' : 'attempt-dot'}"></div>
+            <div th:class="${txn.attempts >= 3 ? 'attempt-dot used' : 'attempt-dot'}"></div>
+        </div>
+
+        <div th:if="${error}" class="alert-danger" th:text="${error}"></div>
+
+        <form th:action="@{/acs/challenge/{id}(id=${txn.transactionId})}" method="post">
+            <div class="otp-label">OTP Kodu</div>
+            <div class="otp-hint">📱 Demo için kod: <strong>1234</strong></div>
+            <input type="text" name="otp" class="otp-input" maxlength="4" placeholder="• • • •"
+                   autofocus inputmode="numeric" pattern="[0-9]{4}">
+            <button type="submit" class="btn-verify">✅ Doğrula</button>
+        </form>
+    </div>
+
+    <div th:if="${txn == null}">
+        <div class="alert-danger" th:text="${error ?: 'Geçersiz işlem.'}"></div>
+    </div>
+
+    <div class="footer-note">
+        Bu işlem <strong>SSL/TLS</strong> ile şifrelenmiştir.
+        <div class="secure-icons">
+            <span>🔒 Güvenli Bağlantı</span>
+            <span>🏦 Banka Onaylı</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

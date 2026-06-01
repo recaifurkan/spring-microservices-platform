@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="#{home.title}">ShopMicro</title>
+</head>
+<body>
+<main>
+
+  <!-- ── HERO ── -->
+  <div class="hero-section" style="margin:-28px -20px 0;padding:64px 20px 52px">
+    <div class="container" style="position:relative;z-index:1">
+      <span class="hero-badge" th:text="#{home.hero.badge}">🔥 New Season</span>
+      <h1 th:text="#{home.hero.heading1}">Everything You Need</h1>
+      <h1><span th:text="#{home.hero.heading2}">at ShopMicro</span></h1>
+      <p th:text="#{home.hero.subtitle}">Electronics, fashion, books, sports and more.</p>
+
+      <form class="hero-search" th:action="@{/products}" method="get">
+        <input type="text" name="search" th:placeholder="#{home.hero.search.placeholder}">
+        <button type="submit" th:text="#{home.hero.search.btn}">Find Products →</button>
+      </form>
+
+      <div class="hero-tags">
+        <th:block th:if="${globalCategories != null}">
+          <a th:each="cat,i : ${globalCategories}" th:if="${i.index < 6}"
+             th:href="@{/products(category=${cat})}"
+             class="hero-tag"
+             th:text="${@catMeta.emoji(cat) + ' ' + cat}">Category</a>
+        </th:block>
+        <a th:href="@{/products(sort='price_asc')}"  class="hero-tag" th:text="#{home.hero.cheapest}">💸 Cheapest</a>
+        <a th:href="@{/products(sort='rating')}"     class="hero-tag" th:text="#{home.hero.topRated}">⭐ Top Rated</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BENEFITS BAR ── -->
+  <div class="benefits-bar" style="margin:0 -20px">
+    <div class="container">
+      <div class="benefits-grid">
+        <div class="benefit-item"><span class="benefit-icon">🚚</span><div class="benefit-text"><strong th:text="#{home.benefits.freeShipping}">Free Shipping</strong><span th:text="#{home.benefits.freeShippingDesc}">on orders over ₺500</span></div></div>
+        <div class="benefit-item"><span class="benefit-icon">🔄</span><div class="benefit-text"><strong th:text="#{home.benefits.returns}">30-Day Returns</strong><span th:text="#{home.benefits.returnsDesc}">Unconditional return guarantee</span></div></div>
+        <div class="benefit-item"><span class="benefit-icon">🔒</span><div class="benefit-text"><strong th:text="#{home.benefits.secure}">Secure Payment</strong><span th:text="#{home.benefits.secureDesc}">OAuth2 JWT protection</span></div></div>
+        <div class="benefit-item"><span class="benefit-icon">💬</span><div class="benefit-text"><strong th:text="#{home.benefits.support}">24/7 Support</strong><span th:text="#{home.benefits.supportDesc}">Always here for you</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CATEGORIES ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title"><span class="title-bar"></span><span th:text="#{home.categories.title}">Categories</span></div>
+      <a th:href="@{/products}" class="section-link" th:text="#{common.seeAll}">See All →</a>
+    </div>
+    <div class="category-grid">
+      <th:block th:if="${globalCategories != null and !globalCategories.empty}">
+        <a th:each="cat : ${globalCategories}"
+           th:href="@{/products(category=${cat})}"
+           class="category-card">
+          <div class="cat-icon" th:text="${@catMeta.emoji(cat)}">📦</div>
+          <div class="cat-name" th:text="${cat}">Category</div>
+        </a>
+      </th:block>
+      <th:block th:if="${globalCategories == null or globalCategories.empty}">
+        <a th:href="@{/products(category='Elektronik')}"    class="category-card"><div class="cat-icon">💻</div><div class="cat-name">Elektronik</div></a>
+        <a th:href="@{/products(category='Giyim & Moda')}" class="category-card"><div class="cat-icon">👕</div><div class="cat-name">Giyim &amp; Moda</div></a>
+        <a th:href="@{/products(category='Kitap')}"         class="category-card"><div class="cat-icon">📚</div><div class="cat-name">Kitap</div></a>
+        <a th:href="@{/products(category='Spor & Outdoor')}" class="category-card"><div class="cat-icon">⚽</div><div class="cat-name">Spor</div></a>
+      </th:block>
+      <a th:href="@{/products(sort='rating')}" class="category-card"><div class="cat-icon">⭐</div><div class="cat-name" th:text="#{home.categories.topRated}">Top Rated</div></a>
+    </div>
+  </div>
+
+  <!-- ── FEATURED PRODUCTS ── -->
+  <div class="section" th:if="${not #lists.isEmpty(data.featuredProducts)}">
+    <div class="section-header">
+      <div class="section-title"><span class="title-bar"></span><span th:text="#{home.featured.title}">🏆 Featured Products</span></div>
+      <a th:href="@{/products}" class="section-link" th:text="#{common.seeAll}">See All →</a>
+    </div>
+    <div class="product-grid">
+      <th:block th:each="p : ${data.featuredProducts}" th:if="${p != null}">
+        <div th:replace="~{fragments/product-card :: card(${p}, '/')}"></div>
+      </th:block>
+    </div>
+  </div>
+
+  <!-- ── PROMO BANNERS ── -->
+  <div class="promo-grid">
+    <div class="promo-card promo-orange">
+      <h3 th:if="${globalCategories != null and globalCategories.size() > 0}"
+          th:text="${@catMeta.emoji(globalCategories[0])} + ' ' + ${globalCategories[0]}">🔥 Campaign</h3>
+      <h3 th:if="${globalCategories == null or globalCategories.empty}" th:text="#{home.promo.fallback1}">📱 Tech Week</h3>
+      <p th:text="#{home.promo.special}">Special prices on selected products!</p>
+      <a th:href="${globalCategories != null and !globalCategories.empty} ? @{/products(category=${globalCategories[0]})} : @{/products}"
+         class="btn btn-dark btn-sm" th:text="#{home.promo.explore}">Explore</a>
+      <span class="promo-emoji"
+            th:text="${globalCategories != null and !globalCategories.empty ? @catMeta.emoji(globalCategories[0]) : '💻'}">💻</span>
+    </div>
+    <div class="promo-card promo-purple">
+      <h3 th:if="${globalCategories != null and globalCategories.size() > 1}"
+          th:text="${@catMeta.emoji(globalCategories[1])} + ' ' + ${globalCategories[1]}">🎁 Campaign</h3>
+      <h3 th:if="${globalCategories == null or globalCategories.size() <= 1}" th:text="#{home.promo.fallback2}">👗 Fashion Festival</h3>
+      <p th:text="#{home.promo.newCollection}">Special prices on the new collection!</p>
+      <a th:href="${globalCategories != null and globalCategories.size() > 1} ? @{/products(category=${globalCategories[1]})} : @{/products}"
+         class="btn btn-dark btn-sm" th:text="#{home.promo.shop}">Shop Now</a>
+      <span class="promo-emoji"
+            th:text="${globalCategories != null and globalCategories.size() > 1 ? @catMeta.emoji(globalCategories[1]) : '👕'}">👕</span>
+    </div>
+  </div>
+
+  <!-- ── TOP RATED ── -->
+  <div class="section" th:if="${not #lists.isEmpty(data.topRated)}">
+    <div class="section-header">
+      <div class="section-title"><span class="title-bar"></span><span th:text="#{home.topRated.title}">⭐ Top Rated</span></div>
+      <a th:href="@{/products(sort='rating')}" class="section-link" th:text="#{common.seeAll}">See All →</a>
+    </div>
+    <div class="product-grid">
+      <th:block th:each="p,i : ${data.topRated}" th:if="${p != null and i.index < 4}">
+        <div th:replace="~{fragments/product-card :: card(${p}, '/')}"></div>
+      </th:block>
+    </div>
+  </div>
+
+  <!-- ── NEW ARRIVALS ── -->
+  <div class="section" th:if="${not #lists.isEmpty(data.newest)}">
+    <div class="section-header">
+      <div class="section-title"><span class="title-bar"></span><span th:text="#{home.newArrivals.title}">🆕 New Arrivals</span></div>
+      <a th:href="@{/products(sort='newest')}" class="section-link" th:text="#{common.seeAll}">See All →</a>
+    </div>
+    <div class="product-grid">
+      <th:block th:each="p : ${data.newest}" th:if="${p != null}">
+        <div th:replace="~{fragments/product-card :: card(${p}, '/')}"></div>
+      </th:block>
+    </div>
+  </div>
+
+  <!-- ── CTA FOR GUESTS ── -->
+  <div class="card text-center" sec:authorize="!isAuthenticated()"
+       style="background:linear-gradient(135deg,var(--navy),#2d1b69);color:#fff;margin-top:40px">
+    <div style="font-size:2.5rem;margin-bottom:12px">🛒</div>
+    <h2 style="color:#fff;margin-bottom:8px" th:text="#{home.cta.heading}">Sign in to start shopping</h2>
+    <p style="color:rgba(255,255,255,.7);margin-bottom:20px" th:text="#{home.cta.subtitle}">All features are waiting for you.</p>
+    <a th:href="@{/oauth2/authorization/auth-server}" class="btn btn-primary btn-lg" th:text="#{home.cta.login}">🔑 Sign In</a>
+    <a th:href="@{/register}" class="btn btn-outline btn-lg"
+       style="margin-left:12px;border-color:rgba(255,255,255,.3);color:#fff" th:text="#{home.cta.register}">📝 Register</a>
+  </div>
+
+</main>
+</body>
+</html>

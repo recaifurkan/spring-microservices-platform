@@ -1,0 +1,90 @@
+# =============================================
+# Shared config for all services
+# Each service loads this file first and then
+# overrides it with its own application.yml
+# from the service-specific folder.
+# =============================================
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  # ── Distributed Tracing (OpenTelemetry) ────────────────────────────────
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0   # dev: 100% sampling — change to 0.1 (10%) in prod
+  otlp:
+    tracing:
+      # Can be overridden with the OTEL_EXPORTER_OTLP_ENDPOINT env var
+      # Grafana Tempo : http://tempo:4318
+      # Jaeger        : http://jaeger:4318
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+      timeout: 10s
+
+# ── Logging ──────────────────────────────────────────────────────
+# Single central Logback file: logback-spring.xml at the repository root
+# Services run from their own subdirectories, so '../' resolves to the root.
+# Spring Boot loads this config before logging starts, so logging.config works here.
+logging:
+  config: file:../logback-spring.xml
+  file:
+    path: ${LOG_PATH:./logs}
+  level:
+    # ── Feign full logging: request line, headers, body, response ──────────
+    com.example: DEBUG                          # all @FeignClient interfaces
+    feign: DEBUG                                # Feign core (retry, codec, etc.)
+    feign.Logger: DEBUG                         # Feign's Slf4jLogger writes from here
+    feign.codec.DecodeException: INFO           # keep decode errors at INFO level
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    registry-fetch-interval-seconds: 30
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# ── Resilience4j – Shared default config inherited by all services ─────────
+spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true   # circuit breaker enabled for all Feign-based services
+      # ── Feign full logging (request line + headers + body + response) ─────
+      client:
+        config:
+          default:
+            logger-level: full   # NONE | BASIC | HEADERS | FULL
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          # feign.FeignException is intentionally omitted here; Feign-based services add it locally
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+

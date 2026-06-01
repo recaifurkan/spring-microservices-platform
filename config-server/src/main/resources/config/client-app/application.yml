@@ -1,0 +1,34 @@
+# =============================================
+# client-app-specific config
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 8081
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          resource-server-client:
+            client-id: client-app
+            client-secret: secret
+            client-authentication-method: client_secret_post
+            authorization-grant-type: client_credentials
+            scope: catalog:read, orders:read, orders:write, payments:read, payments:write, notifications:read
+        provider:
+          resource-server-client:
+            token-uri: http://localhost:9000/oauth2/token
+
+# Feign client URL override (works even without Eureka)
+resource-server:
+  url: http://localhost:8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    oauth2-redirect-url: http://localhost:8081/swagger-ui/swagger-ui/oauth2-redirect.html
+    persist-authorization: true
+

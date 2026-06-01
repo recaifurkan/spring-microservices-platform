@@ -1,0 +1,28 @@
+# =============================================
+# resource-server-specific config
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9000/oauth2/jwks
+          issuer-uri: http://localhost:9000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    oauth2-redirect-url: http://localhost:8080/swagger-ui/swagger-ui/oauth2-redirect.html
+    oauth:
+      client-id: client-app
+      client-secret: secret
+      scopes: "openid profile email api.read api.write"
+      use-pkce-with-authorization-code-grant: false
+    persist-authorization: true
+

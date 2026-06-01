@@ -1,0 +1,89 @@
+# =============================================
+# frontend-service-specific config
+# Thymeleaf + OAuth2 Authorization Code Flow
+# Shared settings are inherited from config/application.yml
+# =============================================
+server:
+  port: 8070
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+
+spring:
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+
+  security:
+    oauth2:
+      client:
+        registration:
+          auth-server:
+            client-id: frontend-client
+            client-secret: frontend-secret
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: >-
+              openid, profile, email,
+              catalog:read, catalog:write,
+              orders:read, orders:write, orders:manage,
+              cart:read, cart:write,
+              payments:read, payments:write, payments:manage,
+              users:read, users:write, users:manage,
+              notifications:read, notifications:write
+            client-name: Spring Microservices Platform
+        provider:
+          auth-server:
+            authorization-uri: http://localhost:9000/oauth2/authorize
+            token-uri: http://localhost:9000/oauth2/token
+            jwk-set-uri: http://localhost:9000/oauth2/jwks
+            user-info-uri: http://localhost:9000/userinfo
+            user-name-attribute: sub
+            issuer-uri: http://localhost:9000
+
+# All backend calls go through the API Gateway
+gateway:
+  url: http://localhost:8090
+
+# ── Outgoing HTTP logging (RestTemplate → Apache HttpClient 5) ──────────────
+logging:
+  level:
+    org.springframework.web.client.RestTemplate: DEBUG   # method + url + status
+    org.apache.hc.client5.http: DEBUG                    # connection + header summary
+    org.apache.hc.client5.http.headers: DEBUG            # all request/response headers (including traceparent)
+    org.apache.hc.client5.http.wire: DEBUG               # raw wire: headers + body byte by byte
+
+# ── Resilience4j – frontend-service-specific instances ─────────────────────
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        base-config: default
+      cartService:
+        base-config: default
+      orderService:
+        base-config: default
+      paymentService:
+        base-config: default
+      notificationService:
+        base-config: default
+      userProfileService:
+        base-config: default
+  retry:
+    instances:
+      productService:
+        base-config: default
+      cartService:
+        base-config: default
+      orderService:
+        base-config: default
+      paymentService:
+        base-config: default
+      notificationService:
+        base-config: default
+      userProfileService:
+        base-config: default
+

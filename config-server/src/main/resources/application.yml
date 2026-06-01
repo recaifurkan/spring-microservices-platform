@@ -1,0 +1,40 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native          # Default: native file backend (reads from the classpath)
+    group:
+      # When started with SPRING_PROFILES_ACTIVE=local/test, the native profile is included as well.
+      # Otherwise, the external profile value may override config-server's own 'native' profile
+      # and trigger an "Invalid config server configuration / git URI" error.
+      local: "native"
+      test:  "native"
+  cloud:
+    config:
+      server:
+        native:
+          # 1) config/application.yml        → shared settings for all services
+          # 2) config/{application}/          → service-specific overrides from its own folder
+          # 3) config/{application}-{profile} → profile-based overrides (for example local, test)
+          search-locations: classpath:/config/,classpath:/config/{application}/
+        # If you want to use Git instead of the native backend:
+        # git:
+        #   uri: https://github.com/your-org/your-config-repo
+        #   default-label: main
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
